@@ -46,6 +46,7 @@ mapRouter.get("/pins", requireUser, async (req, res, next) => {
 
 // Create new pin for logged-in user
 mapRouter.post("/pins", requireUser, async (req, res, next) => {
+  console.log("Adding pin request received:", req.body);
   try {
     const {
       name,

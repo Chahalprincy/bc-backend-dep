@@ -43,25 +43,29 @@ export async function getMapPinsByUserId(userId) {
   return rows;
 }
 
-export async function updateMapPin({
-  id,
-  userId,
-  name,
-  address,
-  notes,
-  rating,
-  locationType,
-  visitedDate,
-}) {
+export async function updateMapPin(id, userId, updateData) {
+  const {
+    name,
+    address,
+    notes,
+    rating,
+    locationType,
+    visitedDate,
+    latitude,
+    longitude,
+  } = updateData;
+
   const sql = `
     UPDATE map 
     SET 
-      name = $3,
-      address = $4,
-      notes = $5,
-      rating = $6,
-      location_type = $7,
-      visited_date = $8
+      name = COALESCE($3, name),
+      address = COALESCE($4, address),
+      notes = COALESCE($5, notes),
+      rating = COALESCE($6, rating),
+      location_type = COALESCE($7, location_type),
+      visited_date = COALESCE($8, visited_date),
+      latitude = COALESCE($9, latitude),
+      longitude = COALESCE($10, longitude)
     WHERE id = $1 AND user_id = $2 
     RETURNING *
     `;
@@ -76,6 +80,8 @@ export async function updateMapPin({
     rating,
     locationType,
     visitedDate,
+    latitude,
+    longitude,
   ]);
   return pin;
 }
