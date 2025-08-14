@@ -7,10 +7,10 @@ import {
   deleteMapPin,
 } from "#db/queries/map";
 
-const mapRouter = express.Router();
+const router = express.Router();
 
 // Get Mapbox access token (secure endpoint)
-mapRouter.get("/mapbox-token", requireUser, (req, res) => {
+router.get("/mapbox-token", requireUser, (req, res) => {
   if (!process.env.MAPBOX_ACCESS_TOKEN) {
     return res.status(500).json({ error: "Mapbox token not configured" });
   }
@@ -20,85 +20,93 @@ mapRouter.get("/mapbox-token", requireUser, (req, res) => {
 });
 
 // Get all pins for logged-in user
-mapRouter.get("/pins", requireUser, async (req, res, next) => {
-  try {
-    const pins = await getMapPinsByUserId(req.user.id);
+router
+  .get("/pins", requireUser, async (req, res, next) => {
+    try {
+      const pins = await getMapPinsByUserId(req.user.id);
 
-    // Format pins for frontend
-    const formattedPins = pins.map((pin) => ({
-      id: pin.id,
-      name: pin.name,
-      longitude: parseFloat(pin.longitude),
-      latitude: parseFloat(pin.latitude),
-      address: pin.address,
-      notes: pin.notes,
-      rating: pin.rating,
-      visitedDate: pin.visited_date,
-      locationType: pin.location_type,
-      createdAt: pin.created_at,
-    }));
+      // Format pins for frontend
+      const formattedPins = pins.map((pin) => ({
+        id: pin.id,
+        name: pin.name,
+        longitude: parseFloat(pin.longitude),
+        latitude: parseFloat(pin.latitude),
+        address: pin.address,
+        notes: pin.notes,
+        rating: pin.rating,
+        visitedDate: pin.visited_date,
+        locationType: pin.location_type,
+        createdAt: pin.created_at,
+      }));
 
-    res.json(formattedPins);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Create new pin for logged-in user
-mapRouter.post("/pins", requireUser, async (req, res, next) => {
-  console.log("Adding pin request received:", req.body);
-  try {
-    const {
-      name,
-      latitude,
-      longitude,
-      address,
-      notes,
-      rating,
-      locationType,
-      visitedDate,
-    } = req.body;
-
-    if (!name || !latitude || !longitude) {
-      return res
-        .status(400)
-        .json({ error: "Name, latitude, and longitude are required" });
+      res.json(formattedPins);
+    } catch (error) {
+      console.error("Error fetching pins:", error);
+      res.status(500).json({ error: "Failed to fetch pins" });
     }
+  })
+  // Create new pin for logged-in user
+  .post("/pins", requireUser, async (req, res, next) => {
+    try {
+      console.log("POST /map/pins - Request received");
+      console.log("Request body:", req.body);
+      console.log("User:", req.user);
 
-    const newPin = await createMapPin({
-      userId: req.user.id,
-      name,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
-      address,
-      notes,
-      rating: rating ? parseInt(rating) : null,
-      locationType,
-      visitedDate,
-    });
+      const {
+        name,
+        latitude,
+        longitude,
+        address,
+        notes,
+        rating,
+        locationType,
+        visitedDate,
+      } = req.body;
 
-    // Format response
-    const formattedPin = {
-      id: newPin.id,
-      name: newPin.name,
-      longitude: parseFloat(newPin.longitude),
-      latitude: parseFloat(newPin.latitude),
-      address: newPin.address,
-      notes: newPin.notes,
-      rating: newPin.rating,
-      visitedDate: newPin.visited_date,
-      locationType: newPin.location_type,
-      createdAt: newPin.created_at,
-    };
+      if (!name || !latitude || !longitude) {
+        return res
+          .status(400)
+          .json({ error: "Name, latitude, and longitude are required" });
+      }
 
-    res.status(201).json(formattedPin);
-  } catch (error) {
-    next(error);
-  }
-});
+      const newPin = await createMapPin({
+        userId: req.user.id,
+        name,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        address: address || null,
+        notes: notes || null,
+        rating: rating ? parseInt(rating) : null,
+        locationType: locationType || "been_there",
+        visitedDate: visitedDate || null,
+      });
+
+      // Format response
+      const formattedPin = {
+        id: newPin.id,
+        name: newPin.name,
+        longitude: parseFloat(newPin.longitude),
+        latitude: parseFloat(newPin.latitude),
+        address: newPin.address,
+        notes: newPin.notes,
+        rating: newPin.rating,
+        visitedDate: newPin.visited_date,
+        locationType: newPin.location_type,
+        createdAt: newPin.created_at,
+      };
+
+      console.log("Pin created successfully:", formattedPin);
+      res.status(201).json(formattedPin);
+    } catch (error) {
+      console.error("Error creating pin:", error);
+      res
+        .status(500)
+        .json({ error: "Failed to create pin", details: error.message });
+    }
+  });
 
 // Update pin
-mapRouter.put("/pins/:id", requireUser, async (req, res, next) => {
+router.put("/pins/:id", requireUser, async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -148,7 +156,7 @@ mapRouter.put("/pins/:id", requireUser, async (req, res, next) => {
 });
 
 // Delete pin
-mapRouter.delete("/pins/:id", requireUser, async (req, res, next) => {
+router.delete("/pins/:id", requireUser, async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -160,8 +168,9 @@ mapRouter.delete("/pins/:id", requireUser, async (req, res, next) => {
 
     res.json({ message: "Pin deleted successfully" });
   } catch (error) {
-    next(error);
+    console.error("Error deleting pin:", error);
+    res.status(500).json({ error: "Failed to delete pin" });
   }
 });
 
-export default mapRouter;
+export default router;
