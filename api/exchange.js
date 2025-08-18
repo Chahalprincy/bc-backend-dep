@@ -1,35 +1,32 @@
 import express from "express";
-const router = express.Router();
-
 import {
   getRatesFromAPI,
-  getRateByCodeFromAPI,
+  getSupportedCodesFromAPI,
 } from "../db/queries/exchange.js";
 
-// GET /daily/exchange - get all rates from API
+const router = express.Router();
+
+// Route to fetch all exchange rates
+// GET /daily/exchange
 router.get("/", async (req, res) => {
-  const base = req.query.base || "USD";
   try {
-    const rates = await getRatesFromAPI(base);
+    const rates = await getRatesFromAPI(); // default base USD
     res.json(rates);
   } catch (err) {
-    console.error("Error fetching rates:", err);
-    res.status(500).json({ error: "Failed to fetch rates from API" });
+    console.error("Error fetching exchange rates:", err.message);
+    res.status(500).json({ error: "Failed to fetch exchange rates" });
   }
 });
 
-// GET /daily/exchange/:code - get a specific currency rate from API
-router.get("/:code", async (req, res) => {
-  const base = req.query.base || "USD";
+// Route to fetch all supported currency codes and names
+// GET /daily/exchange/currency-codes
+router.get("/currency-codes", async (req, res) => {
   try {
-    const currency = await getRateByCodeFromAPI(req.params.code, base);
-    if (!currency) {
-      return res.status(404).json({ error: "Currency not found" });
-    }
-    res.json(currency);
+    const codes = await getSupportedCodesFromAPI();
+    res.json(codes);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch currency from API" });
+    console.error("Error fetching currency codes:", err.message);
+    res.status(500).json({ error: "Failed to fetch currency codes" });
   }
 });
 
