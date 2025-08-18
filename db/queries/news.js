@@ -7,13 +7,12 @@ const apiClient = axios.create({
 });
 
 export async function getNews(search, page) {
+  // encodeURIComponent - encodes special characters in search terms safely, URL wont break.
   const url = `/everything?q=${encodeURIComponent(
     search
   )}&apiKey=${API_KEY}&pageSize=50&page=${page}`;
   try {
-    const response = await apiClient.get(url, {
-      headers: { "User-Agent": "MyNewsApp/1.0" },
-    });
+    const response = await apiClient.get(url);
     return {
       articles: response.data.articles,
       totalResults: response.data.totalResults,

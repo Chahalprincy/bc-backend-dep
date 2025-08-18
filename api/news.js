@@ -7,7 +7,6 @@ router.get("/", async (req, res) => {
   const { q = "latest", page = 1 } = req.query;
   try {
     const data = await getNews(q, page);
-    // res.set("Cache-Control", "no-store");
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });

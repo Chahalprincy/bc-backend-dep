@@ -45,3 +45,20 @@ export async function getRateByCodeFromAPI(code, base = "USD") {
     last_updated: data.time_last_update_utc,
   };
 }
+
+/**
+ * Get supported currency codes and names from API
+ */
+export async function getSupportedCodesFromAPI() {
+  const url = `https://v6.exchangerate-api.com/v6/${API_KEY}/codes`;
+  const { data } = await axios.get(url);
+
+  if (!data?.supported_codes) {
+    throw new Error("Invalid response from ExchangeRate API (codes)");
+  }
+
+  return data.supported_codes.map(([currency_code, currency_name]) => ({
+    currency_code,
+    currency_name,
+  }));
+}
