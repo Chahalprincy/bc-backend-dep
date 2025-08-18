@@ -16,7 +16,7 @@ function parseLocation(loc) {
   return Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null;
 }
 
-async function fetchOpenMeteo({ lat, lon, units = "metric" }) {
+async function fetchOpenMeteo({ lat, lon, units = "imperial" }) {
   const params = new URLSearchParams({
     latitude: lat,
     longitude: lon,
