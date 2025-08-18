@@ -1,9 +1,11 @@
-DROP TABLE IF EXISTS game_scores;
-DROP TABLE IF EXISTS journal_entries;
-DROP TABLE IF EXISTS map;
-DROP TABLE IF EXISTS daily_items;
-DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS game_scores CASCADE;
+DROP TABLE IF EXISTS journal_entries CASCADE;
+DROP TABLE IF EXISTS map CASCADE;
+DROP TABLE IF EXISTS news CASCADE;
+DROP TABLE IF EXISTS daily_items CASCADE;
+DROP TABLE IF EXISTS categories CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS mood_entries CASCADE;
 
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
@@ -36,7 +38,7 @@ CREATE TABLE journal_entries (
   id serial PRIMARY KEY,
   entry_timestamp DATE,
   title TEXT,
-  context TEXT,
+  content TEXT,
   -- image,
   tags TEXT,
   created_at TIME,
@@ -68,4 +70,13 @@ CREATE TABLE game_scores (
   attempts     INTEGER NOT NULL DEFAULT 1,
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (user_id, game_key)
+);
+
+CREATE TABLE mood_entries (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  mood_value INTEGER NOT NULL CHECK (mood_value BETWEEN 1 AND 7), -- <-- CHANGE THIS LINE
+  mood_date DATE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, mood_date)
 );
