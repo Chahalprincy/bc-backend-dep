@@ -13,6 +13,7 @@ import cryptoRouter from "#api/crypto";
 import mapRouter from "#api/map";
 import gamesRouter from "#api/games";
 import journalRouter from "#api/journal";
+import moodRouter from "#api/mood";
 
 app.use(
   cors({
@@ -36,6 +37,7 @@ app.use("/daily/crypto", cryptoRouter);
 app.use("/map", mapRouter);
 app.use("/games", gamesRouter);
 app.use("/journal", journalRouter);
+app.use("/mood", moodRouter);
 
 app.use((err, req, res, next) => {
   // A switch statement can be used instead of if statements
