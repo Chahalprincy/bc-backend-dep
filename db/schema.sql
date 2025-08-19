@@ -75,7 +75,7 @@ CREATE TABLE game_scores (
 CREATE TABLE mood_entries (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  mood_value INTEGER NOT NULL CHECK (mood_value BETWEEN 1 AND 7), -- <-- CHANGE THIS LINE
+  mood_value INTEGER NOT NULL CHECK (mood_value BETWEEN 1 AND 8), 
   mood_date DATE NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE (user_id, mood_date)
