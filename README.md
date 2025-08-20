@@ -25,3 +25,5 @@ EXCHANGE_API_KEY=e1df6ca5eb4a6b0b676ccf10 # update the API_KEY
 CRYPTO_API_KEY=CG-GhZPB2aCLPCjL1j6Zxk9trnv # update the API_KEY
 
 MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoibGtsb2gzMSIsImEiOiJjbWUzMHFhYzIwMjhzMnNvbjVhenoxNGx6In0.prhOo6V_pATa5V7HZijTtA
+
+FINNHUB_API_KEY=(get key from https://finnhub.io/)
