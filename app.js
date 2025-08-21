@@ -1,22 +1,35 @@
 import morgan from "morgan";
 import express from "express";
-import cors from "cors";
 const app = express();
 
-const NETLIFY = process.env.CORS_ORIGIN || "https://brain-cloud.netlify.app";
-const DEV     = "http://localhost:5173";
+// ---- CORS (normalize + log) ----
+const normalize = (s = "") => s.replace(/\/+$/, "").toLowerCase();
+
+const NETLIFY = normalize(process.env.CORS_ORIGIN || "https://brain-cloud.netlify.app");
+const DEV     = normalize("http://localhost:5173");
+
+// show what we think is allowed in Render logs
+console.log("[CORS] ALLOW:", { NETLIFY, DEV });
+
 const ALLOW = new Set([NETLIFY, DEV]);
 
-
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
+  const rawOrigin = req.headers.origin || "";
+  const origin = normalize(rawOrigin);
+
+  // log what we received so we can compare in Render logs
+  if (rawOrigin) console.log("[CORS] req.origin:", rawOrigin);
+
   if (origin && ALLOW.has(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    // res.setHeader("Access-Control-Allow-Credentials", "true"); // only if you use cookies
+    // echo back the original (non-normalized) origin
+    res.setHeader("Access-Control-Allow-Origin", rawOrigin);
+    // If you use cookies/sessions, also set:
+    // res.setHeader("Access-Control-Allow-Credentials", "true");
   }
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
@@ -24,15 +37,6 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
-
-app.post("/__test", (req, res) => {
-  res.json({
-    ok: true,
-    path: "/__test",
-    origin: req.headers.origin || null,
-    ts: Date.now(),
-  });
-});
 
 app.get("/__test", (req, res) => {
   res.json({ ok: true, method: "GET" });
