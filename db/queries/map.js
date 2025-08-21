@@ -1,5 +1,8 @@
 import db from "#db/client";
 
+/**
+ * Create a new map pin for a user
+ */
 export async function createMapPin({
   userId,
   name,
@@ -12,13 +15,15 @@ export async function createMapPin({
   visitedDate,
 }) {
   const sql = `
-    INSERT INTO map (user_id, name, latitude, longitude, address, notes, rating, location_type, visited_date)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     RETURNING *
-    `;
-  const {
-    rows: [pin],
-  } = await db.query(sql, [
+    INSERT INTO map (
+      user_id, name, latitude, longitude, address, 
+      notes, rating, location_type, visited_date
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING *
+  `;
+
+  const values = [
     userId,
     name,
     latitude,
@@ -28,22 +33,33 @@ export async function createMapPin({
     rating,
     locationType,
     visitedDate,
-  ]);
+  ];
+
+  const {
+    rows: [pin],
+  } = await db.query(sql, values);
   return pin;
 }
 
+/**
+ * Get all map pins for a specific user
+ */
 export async function getMapPinsByUserId(userId) {
   const sql = `
     SELECT * 
     FROM map 
     WHERE user_id = $1 
     ORDER BY created_at DESC
-    `;
+  `;
+
   const { rows } = await db.query(sql, [userId]);
   return rows;
 }
 
-export async function updateMapPin(id, userId, updateData) {
+/**
+ * Update an existing map pin
+ */
+export async function updateMapPin(pinId, userId, updateData) {
   const {
     name,
     address,
@@ -68,11 +84,10 @@ export async function updateMapPin(id, userId, updateData) {
       longitude = COALESCE($10, longitude)
     WHERE id = $1 AND user_id = $2 
     RETURNING *
-    `;
-  const {
-    rows: [pin],
-  } = await db.query(sql, [
-    id,
+  `;
+
+  const values = [
+    pinId,
     userId,
     name,
     address,
@@ -82,16 +97,24 @@ export async function updateMapPin(id, userId, updateData) {
     visitedDate,
     latitude,
     longitude,
-  ]);
+  ];
+
+  const {
+    rows: [pin],
+  } = await db.query(sql, values);
   return pin;
 }
 
+/**
+ * Delete a map pin
+ */
 export async function deleteMapPin(pinId, userId) {
   const sql = `
     DELETE FROM map 
     WHERE id = $1 AND user_id = $2 
     RETURNING *
-    `;
+  `;
+
   const {
     rows: [pin],
   } = await db.query(sql, [pinId, userId]);
