@@ -7,22 +7,6 @@ const NETLIFY = process.env.CORS_ORIGIN || "https://brain-cloud.netlify.app";
 const DEV     = "http://localhost:5173";
 const ALLOW = new Set([NETLIFY, DEV]);
 
-app.post("/__test", (req, res) => {
-  res.json({
-    ok: true,
-    path: "/__test",
-    origin: req.headers.origin || null,
-    ts: Date.now(),
-  });
-});
-
-app.get("/__test", (req, res) => {
-  res.json({ ok: true, method: "GET" });
-});
-
-app.post("/__test", (req, res) => {
-  res.json({ ok: true, method: "POST" });
-});
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
@@ -40,6 +24,26 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+
+app.post("/__test", (req, res) => {
+  res.json({
+    ok: true,
+    path: "/__test",
+    origin: req.headers.origin || null,
+    ts: Date.now(),
+  });
+});
+
+app.get("/__test", (req, res) => {
+  res.json({ ok: true, method: "GET" });
+});
+
+app.post("/__test", (req, res) => {
+  res.json({ ok: true, method: "POST" });
+});
+
+app.get("/health", (req, res) => res.json({ ok: true }));
+
 
 import getUserFromToken from "#middleware/getUserFromToken";
 app.use(getUserFromToken);
@@ -66,7 +70,6 @@ app.use("/games", gamesRouter);
 app.use("/journal", journalRouter);
 app.use("/mood", moodRouter);
 
-app.get("/health", (req, res) => res.json({ ok: true }));
 
 app.use((err, req, res, next) => {
   // A switch statement can be used instead of if statements
