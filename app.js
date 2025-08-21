@@ -1,57 +1,46 @@
+
 import morgan from "morgan";
 import express from "express";
 const app = express();
 
-// ---- CORS (normalize + log) ----
+/* ===== CORS (top of file) ===== */
 const normalize = (s = "") => s.replace(/\/+$/, "").toLowerCase();
-
-const NETLIFY = normalize(process.env.CORS_ORIGIN || "https://brain-cloud.netlify.app");
-const DEV     = normalize("http://localhost:5173");
-
-// show what we think is allowed in Render logs
-console.log("[CORS] ALLOW:", { NETLIFY, DEV });
-
-const ALLOW = new Set([NETLIFY, DEV]);
+const MAIN = normalize(process.env.CORS_ORIGIN || "https://brain-cloud.netlify.app");
+const DEV  = normalize("http://localhost:5173");
 
 app.use((req, res, next) => {
-  const rawOrigin = req.headers.origin || "";
-  const origin = normalize(rawOrigin);
+  const raw = req.headers.origin || "";
+  const origin = normalize(raw);
 
-  // log what we received so we can compare in Render logs
-  if (rawOrigin) console.log("[CORS] req.origin:", rawOrigin);
+  // allow main site, dev, and (optionally) netlify previews:
+  const isMain    = origin === MAIN;
+  const isDev     = origin === DEV;
+  const isPreview = origin.endsWith(".netlify.app");   // <-- remove if you don’t want previews
 
-  if (origin && ALLOW.has(origin)) {
-    // echo back the original (non-normalized) origin
-    res.setHeader("Access-Control-Allow-Origin", rawOrigin);
-    // If you use cookies/sessions, also set:
-    // res.setHeader("Access-Control-Allow-Credentials", "true");
+  if (raw && (isMain || isDev || isPreview)) {
+    res.setHeader("Access-Control-Allow-Origin", raw);
+    // res.setHeader("Access-Control-Allow-Credentials", "true"); // only if you use cookies/sessions
   }
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
 
+/* ===== Parsers + logs ===== */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
-app.get("/__test", (req, res) => {
-  res.json({ ok: true, method: "GET" });
-});
+/* ===== Healthcheck ===== */
+app.get("/health", (_req, res) => res.json({ ok: true }));
 
-app.post("/__test", (req, res) => {
-  res.json({ ok: true, method: "POST" });
-});
-
-app.get("/health", (req, res) => res.json({ ok: true }));
-
-
+/* ===== Auth token middleware ===== */
 import getUserFromToken from "#middleware/getUserFromToken";
-app.use(getUserFromToken);
+app.use(getUserFromToken); // make sure this does NOT reject when no token on public routes
 
+/* ===== Routers ===== */
 import usersRouter from "#api/users";
 import newsRouter from "#api/news";
 import weatherRouter from "./api/weather.js";
@@ -74,29 +63,25 @@ app.use("/games", gamesRouter);
 app.use("/journal", journalRouter);
 app.use("/mood", moodRouter);
 
+/* ===== 404 JSON ===== */
+app.use((req, res) => {
+  res.status(404).json({ message: `Not found: ${req.method} ${req.originalUrl}` });
+});
 
+/* ===== Error handlers (JSON) ===== */
 app.use((err, req, res, next) => {
-  // A switch statement can be used instead of if statements
-  // when multiple cases are handled the same way.
   switch (err.code) {
-    // Invalid type
-    case "22P02":
-      // CHANGE THIS to send JSON
-      return res.status(400).json({ message: err.message });
-    // Unique constraint violation
+    case "22P02": return res.status(400).json({ message: err.message });
     case "23505":
-    // Foreign key violation
-    case "23503":
-      // CHANGE THIS to send JSON
-      return res.status(400).json({ message: err.detail });
-    default:
-      next(err);
+    case "23503": return res.status(400).json({ message: err.detail });
+    default: return next(err);
   }
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err);
-  res.status(500).send("Sorry! Something went wrong.");
+  const status = err.status || 500;
+  res.status(status).json({ message: err.message || "Sorry! Something went wrong." });
 });
 
 export default app;
