@@ -16,6 +16,14 @@ app.post("/__test", (req, res) => {
   });
 });
 
+app.get("/__test", (req, res) => {
+  res.json({ ok: true, method: "GET" });
+});
+
+app.post("/__test", (req, res) => {
+  res.json({ ok: true, method: "POST" });
+});
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && ALLOW.has(origin)) {
