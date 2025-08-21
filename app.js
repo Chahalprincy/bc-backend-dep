@@ -7,6 +7,15 @@ const NETLIFY = process.env.CORS_ORIGIN || "https://brain-cloud.netlify.app";
 const DEV     = "http://localhost:5173";
 const ALLOW = new Set([NETLIFY, DEV]);
 
+app.post("/__test", (req, res) => {
+  res.json({
+    ok: true,
+    path: "/__test",
+    origin: req.headers.origin || null,
+    ts: Date.now(),
+  });
+});
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && ALLOW.has(origin)) {
